@@ -2,41 +2,45 @@ package com.conmissio
 
 import com.conmissio.client.RabbitMqClient
 import com.conmissio.consumer.TransformingMessageConsumer
-import com.conmissio.temp.TempTransformerFunctionReloader
+import com.conmissio.domain.Account
 
-object MessageTransformer extends App {
+object MessageTransformer {
 
-  private var messageConsumer: TransformingMessageConsumer = _
-  private var account: Account = _
-
-  /**
-    * Start transformer and temp transformer function re-loader
-    */
-  MessageTransformer.start(args(0))
-  TempTransformerFunctionReloader.start(args(0))
-
-  def start(accountId: String): Unit = {
-    account = new Account(accountId)
-    messageConsumer = new TransformingMessageConsumer(account.id, account.getMessageProcessor)
-    RabbitMqClient.start(account.getConnectionConfig, messageConsumer)
+  def newInstance(accountId: String): MessageTransformer = {
+    new MessageTransformer(accountId)
   }
 
-  def stop(accountId: String): Unit = {
-    RabbitMqClient.stop()
+class MessageTransformer(accountId: String) {
+
+  private val account: Account = new Account(accountId)
+  private val rabbitMqClient : RabbitMqClient = new RabbitMqClient
+  private val messageConsumer: TransformingMessageConsumer = new TransformingMessageConsumer(account.id, account.getMessageProcessor)
+  @volatile private var running : Boolean = false
+
+  def start(): Unit = {
+    if (running) return
+    running = true
+    rabbitMqClient.start(account.getConnectionConfig, messageConsumer)
   }
 
-  def reloadTransformerFunction(accountId: String): Unit = {
-    setTransformerFunction(accountId, account.getMessageProcessor)
+  def stop(): Unit = {
+    if (!running) return
+    rabbitMqClient.stop()
+    running = false
   }
 
-  def setTransformerFunction(accountId: String, transformerFunction: Function[String, String]): Unit = {
-    if (!accountId.equals(account.id)) {
-      throw new MessageTransformerException("Invalid accountId for instance of transformer, actual: " + accountId + ", expected: " + account.id)
-    }
+  def reloadTransformerFunction(): Unit = {
+    setTransformerFunction(account.getMessageProcessor)
+  }
+
+  def setTransformerFunction(transformerFunction: Function[String, String]): Unit = {
     messageConsumer.registerMessageProcessor(transformerFunction)
   }
 
   def getProcessingAccountId: String = {
     account.id
   }
+
+  def isRunning: Boolean = running
+}
 }

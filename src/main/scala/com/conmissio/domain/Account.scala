@@ -1,5 +1,6 @@
-package com.conmissio
+package com.conmissio.domain
 
+import com.conmissio.TransformerClassFactory
 import com.conmissio.client.ConnectionConfig
 import com.typesafe.config.ConfigFactory
 

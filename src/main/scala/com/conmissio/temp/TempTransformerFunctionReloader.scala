@@ -3,8 +3,10 @@ package com.conmissio.temp
 import java.nio.charset.Charset
 
 import akka.actor.{ActorRef, ActorSystem}
-import com.conmissio.{Account, TransformerClassFactory, MessageTransformer}
+import com.conmissio.MessageTransformer.MessageTransformer
+import com.conmissio.TransformerClassFactory
 import com.conmissio.client.ConnectionConfig
+import com.conmissio.domain.Account
 import com.newmotion.akka.rabbitmq.{BasicProperties, Channel, ChannelActor, ConnectionActor, ConnectionFactory, CreateChannel, Envelope}
 import com.rabbitmq.client.{Consumer, DefaultConsumer}
 import org.slf4j
@@ -19,9 +21,11 @@ object TempTransformerFunctionReloader  {
   var connection:ActorRef = _
   var clientConfig: ConnectionConfig = _
   var account: Account = _
+  var messageTransformer: MessageTransformer = _
 
-  def start(accountId: String): Unit = {
+  def start(accountId: String, messageTransformer: MessageTransformer): Unit = {
     account = new Account(accountId)
+    this.messageTransformer = messageTransformer;
     clientConfig = account.getConnectionConfig
     connection = system.actorOf(ConnectionActor.props(newConnectionFactory(clientConfig)), "rabbitmq")
     connection ! CreateChannel(ChannelActor.props(setupSubscriber), Some("subscriber"))
@@ -59,7 +63,7 @@ object TempTransformerFunctionReloader  {
       override def handleDelivery(consumerTag: String, envelope: Envelope, properties: BasicProperties, body: Array[Byte]) {
         val stringFunction = new String(body, Charset.forName("UTF-8"))
         LOGGER.debug("Reloading function for account: {}, function: {}", account.id.asInstanceOf[Any], stringFunction.asInstanceOf[Any])
-        MessageTransformer.setTransformerFunction(account.id, TransformerClassFactory.create(stringFunction, account.id))
+        messageTransformer.setTransformerFunction(TransformerClassFactory.create(stringFunction, account.id))
       }
     }
   }

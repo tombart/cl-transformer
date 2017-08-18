@@ -9,7 +9,7 @@ import com.rabbitmq.client.{Consumer, DefaultConsumer}
 import org.slf4j
 import org.slf4j.LoggerFactory
 
-object RabbitMqClient  {
+class RabbitMqClient  {
 
   private implicit val system = ActorSystem()
   private val LOGGER: slf4j.Logger = LoggerFactory.getLogger(this.getClass)
