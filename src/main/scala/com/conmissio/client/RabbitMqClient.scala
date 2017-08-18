@@ -34,11 +34,6 @@ class RabbitMqClient  {
     factory
   }
 
-  def stop(): Unit = {
-    system stop connection
-    system.terminate()
-  }
-
   private def setupSubscriber(channel: Channel, self: ActorRef) {
     val exchange = "amq.fanout"
     val queue = createQueue(channel)
@@ -59,5 +54,10 @@ class RabbitMqClient  {
         messageConsumer.handle(bodyAsString)
       }
     }
+  }
+
+  def stop(): Unit = {
+    system stop connection
+    system.terminate()
   }
 }
