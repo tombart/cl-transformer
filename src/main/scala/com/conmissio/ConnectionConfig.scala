@@ -1,4 +1,4 @@
-package com.conmissio.client
+package com.conmissio
 
 import java.util
 

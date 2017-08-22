@@ -2,30 +2,40 @@ package com.conmissio.client
 
 import java.nio.charset.Charset
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ActorRef, ActorSystem, Terminated}
+import com.conmissio.ConnectionConfig
 import com.conmissio.consumer.MessageConsumer
 import com.newmotion.akka.rabbitmq.{BasicProperties, Channel, ChannelActor, ConnectionActor, ConnectionFactory, CreateChannel, Envelope}
 import com.rabbitmq.client.{Consumer, DefaultConsumer}
 import org.slf4j
 import org.slf4j.LoggerFactory
 
-class RabbitMqClient  {
+import scala.concurrent.Future
+
+class RabbitMqClient(var connectionConfig: ConnectionConfig, @volatile var messageConsumer: MessageConsumer)  {
 
   private implicit val system = ActorSystem()
   private val LOGGER: slf4j.Logger = LoggerFactory.getLogger(this.getClass)
 
   var connection:ActorRef = _
-  var clientConfig: ConnectionConfig = _
-  var messageConsumer: MessageConsumer = _
 
-  def start(clientConfig: ConnectionConfig, messageConsumer: MessageConsumer): Unit = {
-    this.messageConsumer = messageConsumer
-    connection = system.actorOf(ConnectionActor.props(newConnectionFactory(clientConfig)), "rabbitmq")
+  def start(): Unit = {
+    connection = system.actorOf(ConnectionActor.props(newConnectionFactory(connectionConfig)), "rabbitmq")
     connection ! CreateChannel(ChannelActor.props(setupSubscriber), Some("subscriber"))
   }
 
+  def reloadConnectionConfig(connectionConfig: ConnectionConfig): Unit = {
+    this.stop()
+    this.connectionConfig = connectionConfig
+    this.start()
+  }
+
+  def updateMessageConsumer(messageConsumer: MessageConsumer): Unit = {
+    this.messageConsumer = messageConsumer
+  }
+
   private def newConnectionFactory(clientConfig: ConnectionConfig): ConnectionFactory = {
-    this.clientConfig = clientConfig
+    this.connectionConfig = clientConfig
     val factory = new ConnectionFactory()
     factory.setHost(clientConfig.uri)
     factory.setPort(clientConfig.port)
@@ -42,8 +52,8 @@ class RabbitMqClient  {
   }
 
   private def createQueue(channel: Channel): String = {
-    channel.queueDeclare(clientConfig.queueName, clientConfig.durable, clientConfig.exclusive,
-      clientConfig.autoDelete, clientConfig.arguments).getQueue
+    channel.queueDeclare(connectionConfig.queueName, connectionConfig.durable, connectionConfig.exclusive,
+      connectionConfig.autoDelete, connectionConfig.arguments).getQueue
   }
 
   private def createReceiver(channel: Channel): Consumer = {
@@ -58,6 +68,7 @@ class RabbitMqClient  {
 
   def stop(): Unit = {
     system stop connection
-    system.terminate()
+    val future: Future[Terminated] =  system.terminate()
+    future.wait(3000)
   }
 }

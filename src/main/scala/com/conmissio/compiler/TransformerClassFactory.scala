@@ -1,4 +1,4 @@
-package com.conmissio
+package com.conmissio.compiler
 
 import scala.reflect.runtime.universe
 import scala.tools.reflect.ToolBox

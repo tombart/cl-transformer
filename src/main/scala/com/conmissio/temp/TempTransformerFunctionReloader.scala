@@ -3,10 +3,8 @@ package com.conmissio.temp
 import java.nio.charset.Charset
 
 import akka.actor.{ActorRef, ActorSystem}
-import com.conmissio.MessageTransformer.MessageTransformer
-import com.conmissio.TransformerClassFactory
-import com.conmissio.client.ConnectionConfig
-import com.conmissio.domain.Account
+import com.conmissio.compiler.TransformerClassFactory
+import com.conmissio.{ConnectionConfig, MessageTransformer}
 import com.newmotion.akka.rabbitmq.{BasicProperties, Channel, ChannelActor, ConnectionActor, ConnectionFactory, CreateChannel, Envelope}
 import com.rabbitmq.client.{Consumer, DefaultConsumer}
 import org.slf4j
@@ -20,13 +18,12 @@ object TempTransformerFunctionReloader  {
 
   var connection:ActorRef = _
   var clientConfig: ConnectionConfig = _
-  var account: Account = _
   var messageTransformer: MessageTransformer = _
-
-  def start(accountId: String, messageTransformer: MessageTransformer): Unit = {
-    account = new Account(accountId)
+  var accountId: String = _
+  def start(accountId: String, messageTransformer: MessageTransformer, connectionConfig: ConnectionConfig): Unit = {
+    this.accountId = accountId
     this.messageTransformer = messageTransformer;
-    clientConfig = account.getConnectionConfig
+    clientConfig = connectionConfig
     connection = system.actorOf(ConnectionActor.props(newConnectionFactory(clientConfig)), "rabbitmq")
     connection ! CreateChannel(ChannelActor.props(setupSubscriber), Some("subscriber"))
   }
@@ -62,8 +59,8 @@ object TempTransformerFunctionReloader  {
     new DefaultConsumer(channel) {
       override def handleDelivery(consumerTag: String, envelope: Envelope, properties: BasicProperties, body: Array[Byte]) {
         val stringFunction = new String(body, Charset.forName("UTF-8"))
-        LOGGER.debug("Reloading function for account: {}, function: {}", account.id.asInstanceOf[Any], stringFunction.asInstanceOf[Any])
-        messageTransformer.setTransformerFunction(TransformerClassFactory.create(stringFunction, account.id))
+        LOGGER.debug("Reloading function for account: {}, function: {}", accountId.asInstanceOf[Any], stringFunction.asInstanceOf[Any])
+        messageTransformer.updateTransformer(TransformerClassFactory.create(stringFunction, accountId))
       }
     }
   }

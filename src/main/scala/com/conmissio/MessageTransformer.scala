@@ -1,46 +1,60 @@
 package com.conmissio
 
-import com.conmissio.client.RabbitMqClient
-import com.conmissio.consumer.TransformingMessageConsumer
-import com.conmissio.domain.Account
+trait MessageTransformer {
 
-object MessageTransformer {
+  /**
+    * Start queue client and connect to the queue.
+    */
+  def start()
 
-  def newInstance(accountId: String): MessageTransformer = {
-    new MessageTransformer(accountId)
-  }
+  /**
+    * Stop queue client and disconnect from the queue.
+    */
+  def stop()
 
-class MessageTransformer(accountId: String) {
+  /**
+    * Update transformation logic to apply to received messages. Transforming function should be passed as string in format:
+    *
+    *     override def apply(message: String): String = {
+    *       message.reverse
+    *      }
+    *
+    * @param transformingFunction
+    */
+  def updateTransformer(transformingFunction: String)
 
-  private val account: Account = new Account(accountId)
-  private val rabbitMqClient : RabbitMqClient = new RabbitMqClient
-  private val messageConsumer: TransformingMessageConsumer = new TransformingMessageConsumer(account.id, account.getMessageProcessor)
-  @volatile private var running : Boolean = false
+  /**
+    * Update transformation logic to apply to received messages.
+    *
+    * @param transformer
+    */
+  def updateTransformer(transformer: Function[String, String])
 
-  def start(): Unit = {
-    if (running) return
-    running = true
-    rabbitMqClient.start(account.getConnectionConfig, messageConsumer)
-  }
+  /**
+    * Update logic to be applied after transformation executed. Message passed to postTransformer is processed message.
+    * Whatever came out from Transformer is passed to postTransformer.
+    *
+    * @param postTransformer
+    */
+  def updatePostTransformer(postTransformer: PostTransformer)
 
-  def stop(): Unit = {
-    if (!running) return
-    rabbitMqClient.stop()
-    running = false
-  }
+  /**
+    * Update queue connection details and restart.
+    *
+    * @param connectionConfig
+    */
+  def reloadConnectionConfig(connectionConfig: ConnectionConfig)
 
-  def reloadTransformerFunction(): Unit = {
-    setTransformerFunction(account.getMessageProcessor)
-  }
+  /**
+    * Get owning account id.
+    * @return
+    */
+  def getAccountId: String
 
-  def setTransformerFunction(transformerFunction: Function[String, String]): Unit = {
-    messageConsumer.registerMessageProcessor(transformerFunction)
-  }
-
-  def getProcessingAccountId: String = {
-    account.id
-  }
-
-  def isRunning: Boolean = running
-}
+  /**
+    * Check weather queue client is running and connected.
+    *
+    * @return
+    */
+  def isRunning: Boolean
 }
