@@ -1,4 +1,4 @@
-package com.conmissio
+package com.conmissio.queues.postTransformer
 
 trait PostTransformer {
 

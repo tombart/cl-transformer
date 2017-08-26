@@ -1,6 +1,6 @@
-package com.conmissio.consumer
+package com.conmissio.queues.consumer
 
-import com.conmissio.PostTransformer
+import com.conmissio.queues.postTransformer.PostTransformer
 
 class TransformingMessageConsumer(accountId: String,
                                   messageProcessor: Function[String, String] = (x:String) => x,

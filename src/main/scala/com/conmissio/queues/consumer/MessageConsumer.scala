@@ -1,4 +1,4 @@
-package com.conmissio.consumer
+package com.conmissio.queues.consumer
 
 trait MessageConsumer {
 

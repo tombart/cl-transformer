@@ -1,8 +1,9 @@
-package com.conmissio
+package com.conmissio.queues
 
 import java.util
 
-case class ConnectionConfig(uri: String,
+case class ConnectionConfig(connectionId: String,
+                            uri: String,
                             port: Int,
                             username: String = "guest",
                             password: String = "guest",

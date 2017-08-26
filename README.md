@@ -1,3 +1,5 @@
+RUBBISH IGNORE THIS FOR NOW!!
+
 **Prototype**
 
 Once started, it listens on two queues for both: messages(queue: feeds) and transforming function(classBodyThatExtendsFunction).

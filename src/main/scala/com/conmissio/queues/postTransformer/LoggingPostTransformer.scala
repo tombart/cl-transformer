@@ -1,6 +1,5 @@
-package com.conmissio.consumer
+package com.conmissio.queues.postTransformer
 
-import com.conmissio.PostTransformer
 import org.slf4j
 import org.slf4j.LoggerFactory
 

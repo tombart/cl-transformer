@@ -1,4 +1,4 @@
-package com.conmissio
+package com.conmissio.queues
 
 class MessageTransformerException(message: String) extends Exception {
 

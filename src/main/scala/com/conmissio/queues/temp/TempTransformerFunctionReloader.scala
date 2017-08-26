@@ -1,18 +1,16 @@
-package com.conmissio.temp
-
-import java.nio.charset.Charset
-
+package com.conmissio.queues.temp
+/*
 import akka.actor.{ActorRef, ActorSystem}
-import com.conmissio.compiler.TransformerClassFactory
+import com.conmissio.queues.compiler.TransformerClassFactory
 import com.conmissio.{ConnectionConfig, MessageTransformer}
 import com.newmotion.akka.rabbitmq.{BasicProperties, Channel, ChannelActor, ConnectionActor, ConnectionFactory, CreateChannel, Envelope}
 import com.rabbitmq.client.{Consumer, DefaultConsumer}
 import org.slf4j
-import org.slf4j.LoggerFactory
+import org.slf4j.LoggerFactory*/
 
 // Temporary object to listen to a rabbit mq and reload transforming function
 object TempTransformerFunctionReloader  {
-
+/*
   private implicit val system = ActorSystem()
   private val LOGGER: slf4j.Logger = LoggerFactory.getLogger(TempTransformerFunctionReloader.getClass)
 
@@ -63,5 +61,5 @@ object TempTransformerFunctionReloader  {
         messageTransformer.updateTransformer(TransformerClassFactory.create(stringFunction, accountId))
       }
     }
-  }
+  }*/
 }
